@@ -1,7 +1,18 @@
-@(message: String)
+@(list: List[Celebrity], header: String) 
 
-@main("Welcome to Play") {
-
-    @play20.welcome(message)
-
-}
+  <h2>@header</h2>
+  <table>
+    <tr><th>Name</th><th>Color</th></tr>
+    @for(c <- list){ 
+    <tr>
+    <td>@c.id @c.name</td>
+    <td>@c.givenName</td>
+    <td>@c.lastName</td>
+    <td>@c.birthPlaceLabel</td>
+    <td>@c.birthDate</td>
+    <td>@c.residence</td>
+    <td>@c.children</td>
+    <td>@c.abstractText</td>
+    </tr>
+    }
+  </table>
