@@ -5,6 +5,8 @@
 # Home page
 GET   /list            controllers.Application.index()
 
+GET   /read            controllers.Application.readInput
+
 GET   /person/:label   controllers.Application.getDBPedia(label: String)
 
 # Map static resources from the /public folder to the /assets URL path

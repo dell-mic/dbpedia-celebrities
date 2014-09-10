@@ -12,5 +12,6 @@ libraryDependencies ++= Seq(
   cache,
   ws,
     "com.typesafe.slick" %% "slick" % "2.1.0",
-    "com.typesafe.play" %% "play-slick" % "0.8.0"
+    "com.typesafe.play" %% "play-slick" % "0.8.0",
+    "mysql" % "mysql-connector-java" % "5.1.32"
 )

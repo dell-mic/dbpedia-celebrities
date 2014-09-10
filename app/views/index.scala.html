@@ -2,17 +2,28 @@
 
   <h2>@header</h2>
   <table>
-    <tr><th>Name</th><th>Color</th></tr>
+    <tr>
+	    <th>Source</th>
+	    <th>Label</th>
+	    <th>GivenName</th>
+	    <th>LastName</th>
+	    <th>BirthPlace</th>
+	    <th>BirthDate</th>
+	    <th>Residence</th>
+	    <th>Children</th>
+	    <th>Abstract</th>
+    </tr>
     @for(c <- list){ 
     <tr>
-    <td>@c.id @c.name</td>
-    <td>@c.givenName</td>
-    <td>@c.lastName</td>
-    <td>@c.birthPlaceLabel</td>
-    <td>@c.birthDate</td>
-    <td>@c.residence</td>
-    <td>@c.children</td>
-    <td>@c.abstractText</td>
+    	<td>@c.source</td>
+	    <td>@c.label</td>
+	    <td>@c.givenName</td>
+	    <td>@c.lastName</td>
+	    <td>@c.birthPlaceLabel</td>
+	    <td>@c.birthDate</td>
+	    <td>@c.residence</td>
+	    <td>@c.children</td>
+	    <td>@c.abstractText</td>
     </tr>
     }
   </table>

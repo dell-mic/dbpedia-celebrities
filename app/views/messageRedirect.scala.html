@@ -1,0 +1,15 @@
+@* messageRedirect Template File *@
+@(message: String, redirect: String)
+
+
+
+<HTML>
+<HEAD>
+<!-- Send users to the new location. -->
+<TITLE>redirect</TITLE>
+<META HTTP-EQUIV="refresh" CONTENT="1;URL=@redirect">
+</HEAD>
+<BODY>
+<p>@message</p>
+</BODY>
+</HTML>
