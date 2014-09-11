@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+</head>
+<body>
+
+<button>Send an HTTP GET</button>
+
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+  $("button").click(function(){
+    console.log('button pressed');
+    $.ajax({                    
+        url: 'www.golem.de',
+        dataType: 'json',
+        cache: false,
+        async: true,
+        success: function( data, status ){
+           alert(status);
+
+          var persons = data.response;
+          // alert(persons.docs.length);
+          $('#results').append(template(persons));
+          $("#feedback").show();
+        },
+      error: function(xhr, textStatus, err) { //odstampaj textStatus, err jbt
+          // alert('ne radi');
+          alert(textStatus);
+          alert(err);
+
+          // alert("readyState: "+xhr.readyState+"\n xhrStatus: "+xhr.status);
+          // alert("responseText: "+xhr.responseText);
+        }
+      }); 
+  });
+});
+</script>
+
+</body>
+
+
+</html>

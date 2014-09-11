@@ -1,6 +1,6 @@
 @(list: List[Celebrity], header: String) 
 
-  <h2>@header</h2>
+  <h2>@header (@list.size)</h2>
   <table>
     <tr>
 	    <th>Source</th>
@@ -16,7 +16,7 @@
     @for(c <- list){ 
     <tr>
     	<td>@c.source</td>
-	    <td>@c.label</td>
+	    <td><a href="/read?startLabel=@c.label">@c.label</a></td>
 	    <td>@c.givenName</td>
 	    <td>@c.lastName</td>
 	    <td>@c.birthPlaceLabel</td>

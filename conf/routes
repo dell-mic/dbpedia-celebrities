@@ -5,7 +5,7 @@
 # Home page
 GET   /list            controllers.Application.index()
 
-GET   /read            controllers.Application.readInput
+GET   /read            controllers.Application.readInput(startLabel: String ?= null)
 
 GET   /person/:label   controllers.Application.getDBPedia(label: String)
 

@@ -18,6 +18,7 @@ import play.api.libs.json._
 import play.api.libs.json.Reads._
 import play.api.libs.functional.syntax._
 import scala.io.Source
+import play.api.Logger
 
 object Application extends Controller {
 
@@ -25,38 +26,82 @@ object Application extends Controller {
   val Celebrities = TableQuery[CelebritysTable]
 
   lazy val iter = Source.fromFile("/Users/apfelbaum24/Downloads/stars.csv").getLines()
-  
-  //    source: String,
-  //  name: String,
-  //  givenName: String,
-  //  lastName: String,
-  //  birthDate: String,
-  //  birthPlaceLabel: String,
-  //  abstractText: String,
-  //  thumbnail: String,
-  //  children: Int,
-  //  height: String,
-  //  residence: String)
-  
-  def readInput = Action {
-    val line = iter.next()
-    if (line == null) Ok("End of file reached")
-    val parts = line.split(",")
-    try { Ok(views.html.messageRedirect(line + "\n\n" + "Extracted label: " + parts(1), "/read")) }
-    catch {
-     case e: Exception => Ok(views.html.messageRedirect(line + "\n\n" +"Line skipped", "/read"))
-   }
+
+  /**
+   * Iterates over CSV and trys to extract
+   */
+  def readInput(startLabel: String = null) = Action.async {
+    Logger.debug("startLabel: " + startLabel)
+
+    if (iter.isEmpty) {
+      Logger.debug("End of file reached.")
+      Ok("End of file reached")
+    }
+
+    val line = startLabel match {
+      case s: String => iter.dropWhile(s => !s.contains(startLabel)).next()
+      case null => iter.next()
+    }
+    var label = "init"
+    Logger.debug("Read line: " + line)
+
+    try {
+      val parts = line.split(",")
+      label = parts(1).replaceAll("[^A-Za-z0-9 ]", "")
+    } catch {
+      case e: IndexOutOfBoundsException => {
+        Logger.debug("Line skipped: CSV line parsing error")
+        Ok(views.html.messageRedirect(line + "\n\n" + "Line skipped: CSV line parsing error", "/read"))
+      }
+      case e: Exception => {
+        Logger.debug("Line skipped: Unkown error!")
+        Ok(views.html.messageRedirect(line + "\n\n" + "Line skipped: Unkown error!", "/read"))
+      }
+    }
+    Logger.debug("Attempting query with label: " + label)
+    val future = DBpedia.querySingle(label)
+    future.map(s => s match {
+      case s: Celebrity => {
+        DB.withSession { implicit session =>
+          Celebrities.insertOrUpdate(s)
+          Logger.debug("SUCCESS: Data saved: " + s.label)
+          Ok(views.html.messageRedirect("Data saved for label: " + label, "/read"))
+        }
+      }
+      case null => {
+        Logger.debug("No Dbpedia dataset found")
+        Ok(views.html.messageRedirect("No Dbpedia dataset found", "/read"))
+      }
+
+      //        case _ => Ok("wired")
+    })
+
   }
 
   def index = DBAction { implicit rs =>
-    //    val testDataSets = Seq(
-    //      Celebrity(Option(1L), "test", "Halle Berry", "Halle", "Berry", "27-12-78", "USA", "Eine Schauspielerin", "not_found", Option("5"), Option("160m"), Option("Kalifornien")))
-    //    Celebrities.insertAll(testDataSets: _*)
-
     Ok(views.html.index(Celebrities.list, "Alle Datensätze"))
   }
 
+  /**
+   * Extracts a single entry
+   */
   def getDBPedia(label: String) = Action.async {
+    val future = DBpedia.querySingle(label)
+    future.map(s => s match {
+      case s: Celebrity => {
+        play.api.db.slick.DB.withSession { implicit session =>
+          Celebrities.insertOrUpdate(s)
+          Ok(views.html.index(List(s), "Geparster Datensatz"))
+        }
+      }
+      case null => Ok(views.html.index(List(), "Error while parsing"))
+    })
+  }
+
+}
+
+object DBpedia {
+  def querySingle(label: String): Future[Celebrity] = {
     val query = """
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		PREFIX dbo: <http://dbpedia.org/ontology/>
@@ -112,10 +157,13 @@ object Application extends Controller {
       //     .withQueryString("format" -> "text")
       .get().map(
         response => {
+          //TODO:Handle http errors better
+          if (response.status >= 400) return null
+          Logger.debug("DBpedia status repsponse: " + response.statusText)
           val json: JsValue = Json.parse(response.body)
           val bindings = json \ "results" \ "bindings" apply (0) //Currently use only first match in case of many results
 
-          implicit val celebrityReads: Reads[Celebrity] = (
+          val celebrityReads: Reads[Celebrity] = (
             //            (JsPath \ "Person" \ "value").read[Option[Long]] and //Source
             (JsPath \ "Person" \ "value").read[String] and
             (JsPath \ "Label" \ "value").readOpt[String] and
@@ -133,20 +181,16 @@ object Application extends Controller {
 
           celebrityReads.reads(bindings) match {
             case s: JsSuccess[Celebrity] => {
-              var p: Celebrity = s.get
-              // do something with person
-              play.api.db.slick.DB.withSession { implicit session =>
-                Celebrities.insertOrUpdate(p)
-                Ok(views.html.index(List(p), "Geparster Datensatz"))
-              }
-
+              val p: Celebrity = s.get
+              p
             }
             case e: JsError => {
-              Ok(e.toString())
+              //              Future.failed(new Exception("DBpedia Json parser error"))
+              Logger.debug(e.toString())
+              null
             }
           }
 
         })
   }
-
 }
